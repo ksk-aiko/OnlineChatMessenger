@@ -1,0 +1,21 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor Client as "クライアント"
+actor Server as "サーバ"
+
+rectangle "チャットシステム" {
+  usecase "サーバ起動" as UC1
+  usecase "メッセージの送受信" as UC2
+  usecase "ユーザー名の入力" as UC3
+  usecase "接続のリレー" as UC4
+  usecase "クライアントの自動削除" as UC5
+
+  Client --> UC2
+  Client --> UC3
+  Server --> UC1
+  Server --> UC4
+  Server --> UC5
+}
+
+@enduml

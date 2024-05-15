@@ -1,0 +1,35 @@
+@startuml
+class Client {
+    +username: String
+    +connect(): void
+    +sendMessage(msg: String): void
+    +receiveMessage(): void
+}
+
+class Server {
+    +clientList: List<Client>
+    +start(): void
+    +receiveMessage(msg: String, client: Client): void
+    +relayMessage(msg: String): void
+    +addClient(client: Client): void
+    +removeClient(client: Client): void
+}
+
+class RelaySystem {
+    +clientInfo: Map<Client, Date>
+    +relayMessage(msg: String): void
+    +monitorClientStatus(): void
+}
+
+class UDPSocket {
+    +sendData(data: byte[]): void
+    +receiveData(): byte[]
+}
+
+Client "1" --> "1" UDPSocket
+Server "1" --> "1" UDPSocket
+Server "1" --> "1..*" Client
+Server "1" --> "1" RelaySystem
+RelaySystem "1" --> "1..*" Client
+
+@enduml

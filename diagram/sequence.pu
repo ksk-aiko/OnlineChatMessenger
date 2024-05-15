@@ -1,0 +1,36 @@
+@startuml
+actor Client
+participant "CLI" as CLI
+participant "Server" as Server
+participant "Relay System" as RelaySystem
+
+Client -> CLI: ユーザー名を入力
+CLI -> Server: 接続要求
+Server -> Client: 接続確立確認
+
+Client -> Server: メッセージ送信
+Server -> Server: メッセージ解析 (ユーザー名とメッセージ分離)
+Server -> RelaySystem: メッセージ保存
+Server -> RelaySystem: 接続中のクライアント確認
+RelaySystem -> Server: クライアントリスト
+Server -> Client: メッセージ送信 (他のクライアントに配信)
+
+Client -> Server: メッセージ送信
+Server -> Server: メッセージ解析
+Server -> RelaySystem: 最後のメッセージ送信時刻更新
+
+Server -> RelaySystem: クライアントの状態監視
+alt クライアントが連続失敗
+    Server -> RelaySystem: クライアントを削除
+else
+    Server -> RelaySystem: クライアント接続維持
+end
+
+Client -> CLI: 新しいメッセージ入力
+Client -> Server: メッセージ送信
+Server -> Server: メッセージ解析
+Server -> RelaySystem: メッセージ保存
+Server -> RelaySystem: 接続中のクライアント確認
+RelaySystem -> Server: クライアントリスト
+Server -> Client: メッセージ送信 (他のクライアントに配信)
+@enduml
