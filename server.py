@@ -9,21 +9,31 @@ class Server:
         self.clients = []
         self.server = None
 
+    def receiveMessage(self):
+        data, addr = self.server.recvfrom(4096)
+        usernamelen = int(data[:2])
+        print(usernamelen)
+
     def start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server.settimeout(30)
         self.server.bind((self.ip, self.port))
         print('Server started')
         
         while True:
-            connection, client_address = self.server.accept()
+            data, client_address = self.server.recvfrom(4096)
             try:
                 print('Connection from', client_address)
+                print('Received', data)
+                # TODO:usernamelenを取得するコードを追加
             except Exception as e:
                 print(e)
                 break
             finally:
-                connection.close()
-            
+                print('Closing connection...')
+                self.server.close()
+                break
+
 def main():
     server = Server()
     server.start()

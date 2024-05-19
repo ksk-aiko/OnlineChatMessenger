@@ -8,10 +8,18 @@ class Client:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def connect(self):
-        self.socket.connect((self.host, self.port))
+        print("Connecting to the server...")
+        try:
+            self.socket.connect((self.host, self.port))
+            print("Connected to the server")
+        except Exception as e:
+            print("Error connecting to the server:", str(e))
 
     def sendMessage(self, message):
-        self.socket.send(message.encode())
+        try:
+            self.socket.send(message.encode())
+        except Exception as e:
+            print("Error sending message:", str(e))
 
     def receiveMessage(self):
         message = self.socket.recv(4096).decode()
@@ -28,8 +36,11 @@ def main():
     # クライアントインスタンスを作成。
     client = Client(username, host, port)    
     # サーバーに接続
-    print("Connecting to the server...")
     client.connect()
+    # メッセージを送信
+    message = input("Enter a message: ")
+    client.sendMessage(message)
+    
 
 
 
