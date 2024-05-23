@@ -17,7 +17,10 @@ class Client:
 
     def sendMessage(self, message):
         try:
-            self.socket.send(message.encode())
+            # ユーザー名の長さをバイト列に変換
+            usernamelen = len(self.username).to_bytes(1, 'big')
+            # usernamelenとmessageを結合してサーバーに送信
+            self.socket.send(usernamelen + self.username.encode() + message.encode())
         except Exception as e:
             print("Error sending message:", str(e))
 
@@ -29,17 +32,20 @@ class Client:
         self.socket.close()
 
 def main():
-    # CLIでユーザー名を入力
-    username = input("Enter your username: ")
-    host = input("Enter the server's IP address: ")
-    port = int(input("Enter the server's port number: "))
-    # クライアントインスタンスを作成。
-    client = Client(username, host, port)    
-    # サーバーに接続
-    client.connect()
-    # メッセージを送信
-    message = input("Enter a message: ")
-    client.sendMessage(message)
+    while True:
+        # CLIでユーザー名を入力
+        username = input("Enter your username: ")
+        # host = input("Enter the server's IP address: ")
+        host = '0.0.0.0'
+        # port = int(input("Enter the server's port number: "))
+        port = 9001
+        # クライアントインスタンスを作成。
+        client = Client(username, host, port)    
+        # サーバーに接続
+        client.connect()
+        # メッセージを送信
+        message = input("Enter a message: ")
+        client.sendMessage(message)
     
 
 
