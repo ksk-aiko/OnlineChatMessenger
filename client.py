@@ -25,8 +25,18 @@ class Client:
             print("Error sending message:", str(e))
 
     def receiveMessage(self):
-        message = self.socket.recv(4096).decode()
-        return message
+        try:
+            data = self.socket.recv(4096)
+            # ユーザー名の長さを取得
+            usernamelen = int.from_bytes(data[:1], 'big')
+            # ユーザー名を取得
+            username = data[1:1+usernamelen].decode()
+            # メッセージを取得
+            message = data[1+usernamelen:].decode()
+            print('Received message from', username, ':', message)
+        except Exception as e:
+            print("Error receiving message:", str(e))
+            
 
     def close(self):
         self.socket.close()
@@ -46,7 +56,8 @@ def main():
         # メッセージを送信
         message = input("Enter a message: ")
         client.sendMessage(message)
-    
+        client.receiveMessage()
+
 
 
 

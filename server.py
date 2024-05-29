@@ -9,23 +9,25 @@ class Server:
     def __init__(self):
         self.ip = '0.0.0.0'
         self.port = 9001
-        self.clients = {}
         self.server = None
         self.relaySystem = RelaySystem()
         self.running = True
 
     def addClient(self, client):
-        self.clients[client] = ''
+        self.relaySystem.clientInfo[client] = ''
         print('Added client', client)
     
     def relayMessage(self, username, message):
-        for client in self.clients:
+        for client in self.relaySystem.clientInfo:
             if client != username:
                 # ユーザー名の長さをバイト列に変換
                 usernamelen = len(username).to_bytes(1, 'big')
                 # usernamelenとmessageを結合してサーバーに送信
-                self.server.sendto(usernamelen + username.encode() + message.encode(), self.clients[client])
+                self.server.sendto(usernamelen + username.encode() + message.encode(), self.relaySystem.clientInfo[client])
                 print('Relayed message to', client)
+            else:
+                print('There is no client to relay message to.')
+                self.server.sendto(b'OK', self.relaySystem.clientInfo[username])
 
     def receiveMessage(self):
         while self.running:
@@ -40,19 +42,37 @@ class Server:
                 # メッセージを取得
                 message = data[1+usernamelen:].decode()
 
-                print('Received message from', username, ':', message)
+                date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                if username not in self.clients:
+                print('Received message from', username, ':', message, ':', date)
+
+                if username not in self.relaySystem.clientInfo:
                     self.addClient(username)
                 
-                self.relaySystem.clientInfo[username] = message + ' | ' + str(datetime.now())
+                self.relaySystem.clientInfo[username] = client_address
+                self.relaySystem.clientMessage[username] = message
+                self.relaySystem.clientLatestMessageDate[username] = date
                 print(self.relaySystem.clientInfo)
+                print(self.relaySystem.clientMessage)
+                print(self.relaySystem.clientLatestMessageDate)
 
+                self.removeClientFromRelaySystem()
                 self.relayMessage(username, message)
 
 
             except Exception as e:
                 print(e)
+
+    def removeClientFromRelaySystem(self):
+        for username in self.relaySystem.clientLatestMessageDate:
+            if (datetime.now() - datetime.strptime(self.relaySystem.clientLatestMessageDate[username], '%Y-%m-%d %H:%M:%S')).seconds > 30:
+                print('Removing client', username)
+                del self.relaySystem.clientInfo[username]
+                del self.relaySystem.clientMessage[username]
+                del self.relaySystem.clientLatestMessageDate[username]
+                print(self.relaySystem.clientInfo)
+                print(self.relaySystem.clientMessage)
+                print(self.relaySystem.clientLatestMessageDate)
 
     def start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -75,6 +95,8 @@ class Server:
 class RelaySystem:
     def __init__(self):
         self.clientInfo = {}
+        self.clientMessage = {}
+        self.clientLatestMessageDate = {}
 
 def main():
     server = Server()
