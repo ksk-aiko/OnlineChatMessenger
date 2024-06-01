@@ -26,8 +26,8 @@ class Server:
                 self.server.sendto(usernamelen + username.encode() + message.encode(), self.relaySystem.clientInfo[client])
                 print('Relayed message to', client)
             else:
-                print('There is no client to relay message to.')
-                self.server.sendto(b'OK', self.relaySystem.clientInfo[username])
+                #self.server.sendto(b'OK', self.relaySystem.clientInfo[username])
+                continue
 
     def receiveMessage(self):
         while self.running:

@@ -23,10 +23,12 @@ class Client:
             self.socket.send(usernamelen + self.username.encode() + message.encode())
         except Exception as e:
             print("Error sending message:", str(e))
-
     def receiveMessage(self):
         try:
             data = self.socket.recv(4096)
+            if data == b'OK':
+                print('There is no client to relay message to.')
+                return
             # ユーザー名の長さを取得
             usernamelen = int.from_bytes(data[:1], 'big')
             # ユーザー名を取得
@@ -42,7 +44,6 @@ class Client:
         self.socket.close()
 
 def main():
-    while True:
         # CLIでユーザー名を入力
         username = input("Enter your username: ")
         # host = input("Enter the server's IP address: ")
@@ -53,10 +54,11 @@ def main():
         client = Client(username, host, port)    
         # サーバーに接続
         client.connect()
-        # メッセージを送信
-        message = input("Enter a message: ")
-        client.sendMessage(message)
-        client.receiveMessage()
+        while True:
+            # メッセージを送信
+            message = input("Enter a message: ")
+            client.sendMessage(message)
+            client.receiveMessage()
 
 
 
