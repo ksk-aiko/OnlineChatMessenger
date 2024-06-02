@@ -11,7 +11,6 @@ class Server:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.chat_rooms = {}
         self.tokens = {}
-    # TODO:startメソッドを検証する
     def start(self):
         self.udp_socket.bind((self.ip, self.udp_port))
         self.tcp_socket.bind((self.ip, self.tcp_port))
@@ -23,3 +22,19 @@ class Server:
                 self.handle_tcp_request()
             except Exception as e:
                 print(f"An error occurred: {e}")
+    
+    def handle_tcp_connection(self):
+        conn, addr = self.tcp_socket.accept()
+        print(f"Connection from {addr}")
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            data = data.decode()
+            print(f"Received: {data}")
+            response = self.handle_tcp_request(data)
+            conn.send(response.encode())
+        conn.close()
+    
+    def handle_tcp_request(self, data):
+

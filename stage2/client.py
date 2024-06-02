@@ -7,7 +7,7 @@ class Client:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_address = server_address
         self.token = token
-
+    # TODO: 処理の流れを再確認する
     def create_room(self, room_name, password):
         # TCP接続を確立
         self.tcp_socket.connect(self.server_address)
