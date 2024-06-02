@@ -1,0 +1,14 @@
+@startuml
+package "クライアント" {
+  [Client] --> [User Interface]
+  [Client] --> [TCP Module]
+  [Client] --> [UDP Module]
+}
+
+package "サーバー" {
+  [Server] --> [Token Generator]
+  [Server] --> [Room Manager]
+  [Server] --> [TCP Module]
+  [Server] --> [UDP Module]
+}
+@enduml

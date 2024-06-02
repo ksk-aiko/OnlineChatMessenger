@@ -1,0 +1,21 @@
+@startuml
+actor User
+participant Client
+participant Server
+
+User -> Client: 新しいチャットルームを作成
+Client -> Server: TCP接続を確立
+Client -> Server: チャットルーム作成要求
+Server -> Client: クライアントトークンを生成して送信
+Client -> Server: TCP接続を閉じる
+
+User -> Client: 既存のチャットルームに参加
+Client -> Server: TCP接続を確立
+Client -> Server: チャットルーム参加要求
+Server -> Client: クライアントトークンを生成して送信
+Client -> Server: TCP接続を閉じる
+
+Client -> Server: UDPで接続
+Client -> Server: メッセージ送信
+Server -> Client: メッセージ受信
+@enduml

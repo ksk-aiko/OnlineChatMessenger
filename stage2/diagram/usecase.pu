@@ -1,0 +1,15 @@
+@startuml
+actor User
+actor Server
+
+User -> (Create Chat Room)
+User -> (Join Chat Room)
+User -> (Send Message)
+User -> (Receive Message)
+
+(Create Chat Room) -> Server
+(Join Chat Room) -> Server
+(Send Message) -> Server
+(Receive Message) -> Server
+
+@enduml

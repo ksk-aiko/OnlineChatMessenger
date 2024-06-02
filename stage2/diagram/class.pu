@@ -1,0 +1,28 @@
+@startuml
+class Client {
+  +username: String
+  +tcp_socket: Socket
+  +udp_socket: Socket
+  +server_address: Tuple
+  +token: String
+  +create_room(room_name: String, password: String): void
+  +join_room(room_name: String, password: String): void
+  +send_message(message: String): void
+  +receive_message(): void
+  +close(): void
+}
+
+class Server {
+  +tcp_socket: Socket
+  +udp_socket: Socket
+  +rooms: Dictionary
+  +tokens: Dictionary
+  +start(): void
+  +handle_tcp_connections(): void
+  +handle_client(client_socket: Socket): void
+  +handle_udp_messages(): void
+  +generate_token(): String
+}
+
+Client --> Server
+@enduml
