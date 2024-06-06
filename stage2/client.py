@@ -24,11 +24,18 @@ class Client:
         self.tcp_socket.connect(self.server_address)
         # チャットルームの参加リクエストを送信
         self.tcp_socket.send(f"JOIN_ROOM {room_name} {password} {self.token}".encode())
-        # サーバーからトークンを受信
+        # サーバーからレスポンスを受信
         response = self.tcp_socket.recv(1024).decode()
-        # TODO:joinの要求をサーバが受け入れた場合の、クライアント側の処理を追加する
+        if response == "OK":
+            print("Successfully joined the room")
+        else:
+            print("Failed to join the room")
         # TCP接続を切断
         self.tcp_socket.close()
+    
+    # UDPで接続
+    def connect_udp(self):
+        self.udp_socket.connect(self.server_address)
 
     def send_message(self, message):
         # UDPでメッセージを送信
@@ -38,7 +45,7 @@ class Client:
         # UDPでメッセージを受信
         message, address = self.udp_socket.recvfrom(1024)
         return message.decode()
-    
+    # TODO:UDPで接続した後の処理を追加する
     def close(self):
         self.udp_socket.close()
 
