@@ -9,43 +9,99 @@ class Client:
         self.token = token
     
     def create_room(self, room_name, password):
-        # TCP接続を確立
-        self.tcp_socket.connect(self.server_address)
-        # チャットルームの作成リクエストを送信
-        self.tcp_socket.send(f"CREATE_ROOM {room_name} {password} {self.token}".encode())
-        # サーバーからトークンを受信
-        response_token = self.tcp_socket.recv(1024).decode()
-        self.token = response_token
-        # TCP接続を切断
-        self.tcp_socket.close()
+        try:
+            # TCP接続を確立
+            self.tcp_socket.connect(self.server_address)
+            # チャットルームの作成リクエストを送信
+            self.tcp_socket.send(f"CREATE_ROOM {room_name} {password} {self.token}".encode())
+            # サーバーからトークンを受信
+            response_token = self.tcp_socket.recv(1024).decode()
+            self.token = response_token
+        except Exception as e:
+            print(f"An error occurred while creating the room: {e}")
+        finally:
+            # TCP接続を切断
+            self.tcp_socket.close()
 
     def join_room(self, room_name, password):
-        # TCP接続を確立
-        self.tcp_socket.connect(self.server_address)
-        # チャットルームの参加リクエストを送信
-        self.tcp_socket.send(f"JOIN_ROOM {room_name} {password} {self.token}".encode())
-        # サーバーからレスポンスを受信
-        response = self.tcp_socket.recv(1024).decode()
-        if response == "OK":
-            print("Successfully joined the room")
-        else:
-            print("Failed to join the room")
-        # TCP接続を切断
-        self.tcp_socket.close()
+        try:
+            # TCP接続を確立
+            self.tcp_socket.connect(self.server_address)
+            # チャットルームの参加リクエストを送信
+            self.tcp_socket.send(f"JOIN_ROOM {room_name} {password} {self.token}".encode())
+            # サーバーからレスポンスを受信
+            response = self.tcp_socket.recv(1024).decode()
+            if response == "OK":
+                print("Successfully joined the room")
+            else:
+                print("Failed to join the room")
+        except Exception as e:
+            print(f"An error occurred while joining the room: {e}")
+        finally:
+            # TCP接続を切断
+            self.tcp_socket.close()
     
     # UDPで接続
     def connect_udp(self):
+        self.server_address = (self.server_address[0], 9001)
         self.udp_socket.connect(self.server_address)
 
     def send_message(self, message):
-        # UDPでメッセージを送信
-        self.udp_socket.sendto(f"{self.username}: {message}".encode(), self.server_address)
+        try:
+            # UDPでメッセージを送信
+            self.udp_socket.sendto(f"{self.username}: {message}".encode(), self.server_address)
+            print("send_message() is successfully executed")
+        except Exception as e:
+            print(f"An error occurred while sending the message: {e}")
 
     def receive_message(self):
-        # UDPでメッセージを受信
-        message, address = self.udp_socket.recvfrom(1024)
-        return message.decode()
-    # TODO:UDPで接続した後の処理を追加する
+        try:
+            # UDPでメッセージを受信
+            data, address = self.udp_socket.recvfrom(1024)
+            message = data.decode()
+            print(f"Received message: {message} from {address}")
+        except Exception as e:
+            print(f"An error occurred while receiving the message: {e}")
+    
     def close(self):
         self.udp_socket.close()
 
+def main():
+    print("Enter your username:")
+    username = input()
+    print("Are you a new user? (yes/no)")
+    user_response = input()
+    if user_response == "yes":
+        print("Enter the server IP address:")
+        ip = input()
+        print("Do you create a new room or join an existing room? (create/join)")
+        room_response = input()
+        if room_response == "create":
+            print("Enter the room name:")
+            room_name = input()
+            print("Enter the room password:")
+            password = input()
+            client = Client(username, (ip, 9002))
+            client.create_room(room_name, password)
+        elif room_response == "join":
+            print("Enter the room name:")
+            room_name = input()
+            print("Enter the room password:")
+            password = input()
+            print("Enter the token:")
+            token = input()
+            client = Client(username, (ip, 9001), token)
+            client.join_room(room_name, password)
+        else:
+            print('Invalid command')
+        
+        print("Trying to enter the chatroom.")
+        # client.connect_udp()
+        while True:
+            print("Enter a message:")
+            message = input()
+            client.send_message(message)
+            client.receive_message()
+
+if __name__ == "__main__":
+    main()

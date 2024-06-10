@@ -1,6 +1,6 @@
 import os
-import sys
 import socket
+import threading
 
 class Server:
     def __init__(self):
@@ -19,21 +19,28 @@ class Server:
         print(f"Server started at {self.ip}:{self.udp_port} and {self.ip}:{self.tcp_port}")
         while True:
             try:
-                self.handle_tcp_connection()
+                conn, addr = self.tcp_socket.accept()
+                threading.Thread(target=self.handle_tcp_connection, args=(conn, addr)).start()
+                # UDPでの接続を処理
+                data, addr = self.udp_socket.recvfrom(1024)
+                threading.Thread(target=self.handle_udp_connection, args=(data, addr)).start()
             except Exception as e:
                 print(f"An error occurred: {e}")
     
-    def handle_tcp_connection(self):
-        conn, addr = self.tcp_socket.accept()
+    def handle_tcp_connection(self, conn, addr):
         print(f"Connection from {addr}")
         while True:
-            data = conn.recv(1024)
-            if not data:
+            try:
+                data = conn.recv(1024)
+                if not data:
+                    break
+                data = data.decode()
+                print(f"Received: {data}")
+                response = self.handle_tcp_request(data)
+                conn.send(response.encode())
+            except Exception as e:
+                print(f"An error occurred: {e}")
                 break
-            data = data.decode()
-            print(f"Received: {data}")
-            response = self.handle_tcp_request(data)
-            conn.send(response.encode())
         conn.close()
 
     def generate_token(self):
@@ -56,5 +63,14 @@ class Server:
                 return "ERROR"
         else:
             return "ERROR"
+    
+    def handle_udp_connection(self, data, addr):
+        print(f"Received UDP data: {data} from {addr}")
 
+def main():
+    server = Server()
+    server.start()
+
+if __name__ == "__main__":
+    main()
 
