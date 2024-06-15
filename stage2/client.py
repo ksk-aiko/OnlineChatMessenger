@@ -22,7 +22,7 @@ class Client:
         finally:
             # TCP接続を切断
             self.tcp_socket.close()
-
+    #TODO:2人目のクライアントがjoin_room()を実行時、トークンの入力後に何も起こらない問題を解決する
     def join_room(self, room_name, password):
         try:
             # TCP接続を確立
@@ -49,8 +49,10 @@ class Client:
     def send_message(self, message):
         try:
             # UDPでメッセージを送信
+            self.server_address = (self.server_address[0], 9001)
+            print(f"ip address and port: {self.server_address}")
             self.udp_socket.sendto(f"{self.username}: {message}".encode(), self.server_address)
-            print("send_message() is successfully executed")
+            print(f"send_message() is successfully executed, {self.username} {message} {self.server_address}")
         except Exception as e:
             print(f"An error occurred while sending the message: {e}")
 
@@ -73,7 +75,8 @@ def main():
     user_response = input()
     if user_response == "yes":
         print("Enter the server IP address:")
-        ip = input()
+        print("Omit the input this time.")
+        ip = '0.0.0.0'
         print("Do you create a new room or join an existing room? (create/join)")
         room_response = input()
         if room_response == "create":
@@ -90,16 +93,18 @@ def main():
             password = input()
             print("Enter the token:")
             token = input()
-            client = Client(username, (ip, 9001), token)
+            client = Client(username, (ip, 9002), token)
             client.join_room(room_name, password)
         else:
             print('Invalid command')
         
+        print("token is successfully created")
+
         print("Trying to enter the chatroom.")
-        # client.connect_udp()
         while True:
             print("Enter a message:")
             message = input()
+            # TODO:send_message()実行後、サーバ側の処理が始まらない問題を解決する.socket is already connectedというエラーが出る
             client.send_message(message)
             client.receive_message()
 

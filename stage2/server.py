@@ -16,7 +16,7 @@ class Server:
         self.udp_socket.bind((self.ip, self.udp_port))
         self.tcp_socket.bind((self.ip, self.tcp_port))
         self.tcp_socket.listen(5)
-        print(f"Server started at {self.ip}:{self.udp_port} and {self.ip}:{self.tcp_port}")
+        print(f"Server started at UDP -> {self.ip}:{self.udp_port} and TCP -> {self.ip}:{self.tcp_port}")
         while True:
             try:
                 conn, addr = self.tcp_socket.accept()
@@ -37,7 +37,9 @@ class Server:
                 data = data.decode()
                 print(f"Received: {data}")
                 response = self.handle_tcp_request(data)
+                print(response)
                 conn.send(response.encode())
+                print('sent response to client')
             except Exception as e:
                 print(f"An error occurred: {e}")
                 break
@@ -56,8 +58,7 @@ class Server:
             return token
         elif parts[0] == "JOIN_ROOM":
             room_name, password, token = parts[1], parts[2], parts[3]
-            if room_name in self.chat_rooms and self.chat_rooms[room_name] == password:
-                self.tokens[token] = room_name
+            if room_name in self.chat_rooms and self.chat_rooms[room_name] == password and self.tokens[token] == room_name:
                 return "OK"
             else:
                 return "ERROR"
@@ -66,6 +67,8 @@ class Server:
     
     def handle_udp_connection(self, data, addr):
         print(f"Received UDP data: {data} from {addr}")
+        print('Sends a successful receipt message to the client.')
+        self.udp_socket.sendto("OK".encode(), addr)
 
 def main():
     server = Server()
