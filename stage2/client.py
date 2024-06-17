@@ -87,14 +87,20 @@ def main():
             client = Client(username, (ip, 9002))
             client.create_room(room_name, password)
         elif room_response == "join":
-            print("Enter the room name:")
-            room_name = input()
-            print("Enter the room password:")
-            password = input()
-            print("Enter the token:")
-            token = input()
-            client = Client(username, (ip, 9002), token)
-            client.join_room(room_name, password)
+            try:
+                print("Enter the room name:")
+                room_name = input()
+                print("Enter the room password:")
+                password = input()
+                print("Enter the token:")
+                token = input().strip()
+                print('ok, wait...')
+                client = Client(username, (ip, 9002), token)
+                print('for debug')
+                client.join_room(room_name, password)
+                print('for debug2')
+            except Exception as e:
+                print(f"An error occurred while joining the room: {e}")
         else:
             print('Invalid command')
         
@@ -104,7 +110,6 @@ def main():
         while True:
             print("Enter a message:")
             message = input()
-            # TODO:send_message()実行後、サーバ側の処理が始まらない問題を解決する.socket is already connectedというエラーが出る
             client.send_message(message)
             client.receive_message()
 
