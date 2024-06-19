@@ -1,0 +1,23 @@
+@startuml
+participant "Client (TCP)" as ClientTCP
+participant "Server" as Server
+participant "Client (UDP)" as ClientUDP
+participant "Thread (TCP)" as ThreadTCP
+participant "Thread (UDP)" as ThreadUDP
+participant "Thread (Receive)" as ThreadReceive
+
+Server -> Server: start()
+loop while True
+    alt TCP Connection
+        Server -> Server: tcp_socket.accept()
+        Server -> ThreadTCP: handle_tcp_connection(conn, addr)
+        ThreadTCP -> ThreadTCP: Process TCP Connection
+    else UDP Connection
+        Server -> Server: udp_socket.recvfrom(1024)
+        Server -> ThreadUDP: handle_udp_connection(data, addr)
+        ThreadUDP -> ThreadUDP: Process UDP Connection
+    end
+    Server -> ThreadReceive: receiveMessage()
+    ThreadReceive -> ThreadReceive: Process Incoming Messages
+end
+@enduml

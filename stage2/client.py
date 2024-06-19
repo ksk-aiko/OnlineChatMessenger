@@ -22,7 +22,6 @@ class Client:
         finally:
             # TCP接続を切断
             self.tcp_socket.close()
-    #TODO:2人目のクライアントがjoin_room()を実行時、トークンの入力後に何も起こらない問題を解決する
     def join_room(self, room_name, password):
         try:
             # TCP接続を確立
@@ -55,7 +54,6 @@ class Client:
             print(f"send_message() is successfully executed, {self.username} {message} {self.server_address}")
         except Exception as e:
             print(f"An error occurred while sending the message: {e}")
-
     def receive_message(self):
         try:
             # UDPでメッセージを受信

@@ -42,6 +42,7 @@ class Server:
                 threading.Thread(target=self.handle_tcp_connection, args=(conn, addr)).start()
                 # UDPでの接続を処理
                 data, addr = self.udp_socket.recvfrom(1024)
+                # TODO: handle_tcp_connection()とreceiveMessage()を非同期で実行しているため、一人目のクライアントのリレーシステムへの登録がうまくできていない。それを改善する。
                 threading.Thread(target=self.handle_udp_connection, args=(data, addr)).start()
                 threading.Thread(target=self.receiveMessage).start()
             except Exception as e:
@@ -118,7 +119,7 @@ class Server:
                 print(self.relaySystem.clientMessage)
                 print(self.relaySystem.clientLatestMessageDate)
 
-                self.removeClientFromRelaySystem()
+                # self.removeClientFromRelaySystem()
                 self.relayMessage(username, message)
 
 
