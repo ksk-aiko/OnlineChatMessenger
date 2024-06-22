@@ -42,9 +42,8 @@ class Server:
                 threading.Thread(target=self.handle_tcp_connection, args=(conn, addr)).start()
                 # UDPでの接続を処理
                 data, addr = self.udp_socket.recvfrom(1024)
-                # TODO: handle_tcp_connection()とreceiveMessage()を非同期で実行しているため、一人目のクライアントのリレーシステムへの登録がうまくできていない。それを改善する。
                 threading.Thread(target=self.handle_udp_connection, args=(data, addr)).start()
-                threading.Thread(target=self.receiveMessage).start()
+                # threading.Thread(target=self.receiveMessage).start()
             except Exception as e:
                 print(f"An error occurred: {e}")
     
@@ -57,10 +56,10 @@ class Server:
                     break
                 data = data.decode()
                 print(f"Received: {data}")
-                response = self.handle_tcp_request(data)
-                print(response)
-                conn.send(response.encode())
-                print('sent response to client')
+                generated_token = self.handle_tcp_request(data)
+                print(f'Genereated token is {generated_token}')
+                conn.send(generated_token.encode())
+                print('Sended token to client.')
             except Exception as e:
                 print(f"An error occurred: {e}")
                 break
@@ -72,10 +71,11 @@ class Server:
     def handle_tcp_request(self, data):
         parts = data.split()
         if parts[0] == "CREATE_ROOM":
-            room_name, password = parts[1], parts[2]
+            client, room_name, password = parts[1], parts[2], parts[3]
             token = self.generate_token()
             self.chat_rooms[room_name] = password
             self.tokens[token] = room_name
+            self.addClient(client)
             return token
         elif parts[0] == "JOIN_ROOM":
             room_name, password, token = parts[1], parts[2], parts[3]
@@ -88,23 +88,23 @@ class Server:
     
     def handle_udp_connection(self, data, addr):
         print(f"Received UDP data: {data} from {addr}")
+        client_name = data.decode().split()[0]
         print('Sends a successful receipt message to the client.')
-        self.udp_socket.sendto("OK".encode(), addr)
+        self.udp_socket.sendto("OK -> Server received data successfully.".encode(), addr)
+        if self.relaySystem.clientInfo[client_name] == '':
+            self.relaySystem.clientInfo[client_name] = addr
         self.receiveMessage()
     
     def receiveMessage(self):
+        print('Waiting  messages from client...')
         while self.running:
             try:
                 data, client_address = self.udp_socket.recvfrom(4096)
                 print('Connection from', client_address)
                 print('Received', data)
-                # ユーザー名の長さを取得
-                usernamelen = int.from_bytes(data[:1], 'big')
-                # ユーザー名を取得
-                username = data[:1+usernamelen].decode()
-                # メッセージを取得
-                message = data[1+usernamelen:].decode()
 
+                username = data.decode().split()[0]
+                message = data.decode()[len(username)+1:]
                 date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                 print('Received message from', username, ':', message, ':', date)
@@ -121,6 +121,9 @@ class Server:
 
                 # self.removeClientFromRelaySystem()
                 self.relayMessage(username, message)
+
+                # クライアントにメッセージを送信
+                self.udp_socket.sendto(b'OK -> Server received data successfully.', client_address)
 
 
             except Exception as e:
