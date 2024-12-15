@@ -24,12 +24,11 @@ class Server:
         print('Added client', client)
     
     def relayMessage(self, username, message):
+        #TODO: 2人目のクライアントのメッセージが1人目クライアントにリレーされない問題を解決する
+        print(f'Now, we hava these clients -> {self.relaySystem.clientInfo}')
         for client in self.relaySystem.clientInfo:
             if client != username:
-                # ユーザー名の長さをバイト列に変換
-                usernamelen = len(username).to_bytes(1, 'big')
-                # usernamelenとmessageを結合してサーバーに送信
-                self.udp_socket.sendto(usernamelen + username.encode() + message.encode(), self.relaySystem.clientInfo[client])
+                self.udp_socket.sendto(f'From {username}: {message}'.encode(), self.relaySystem.clientInfo[client])
                 print('Relayed message to', client)
             else:
                 #self.udp_socket.sendto(b'OK', self.relaySystem.clientInfo[username])
@@ -78,8 +77,9 @@ class Server:
             self.addClient(client)
             return token
         elif parts[0] == "JOIN_ROOM":
-            room_name, password, token = parts[1], parts[2], parts[3]
+            client_name, room_name, password, token = parts[1], parts[2], parts[3], parts[4]
             if room_name in self.chat_rooms and self.chat_rooms[room_name] == password and self.tokens[token] == room_name:
+                self.addClient(client_name)
                 return "OK"
             else:
                 return "ERROR"
@@ -89,10 +89,12 @@ class Server:
     def handle_udp_connection(self, data, addr):
         print(f"Received UDP data: {data} from {addr}")
         client_name = data.decode().split()[0]
+        message = data.decode()[len(client_name)+1:]
         print('Sends a successful receipt message to the client.')
-        self.udp_socket.sendto("OK -> Server received data successfully.".encode(), addr)
+        self.udp_socket.sendto(f"OK -> Server received data successfully from {client_name}".encode(), addr)
         if self.relaySystem.clientInfo[client_name] == '':
             self.relaySystem.clientInfo[client_name] = addr
+            self.relayMessage(client_name, message)
         self.receiveMessage()
     
     def receiveMessage(self):
@@ -123,7 +125,7 @@ class Server:
                 self.relayMessage(username, message)
 
                 # クライアントにメッセージを送信
-                self.udp_socket.sendto(b'OK -> Server received data successfully.', client_address)
+                self.udp_socket.sendto(f'OK -> Server received data successfully. username: {username} message: {message}'.encode(), client_address)
 
 
             except Exception as e:

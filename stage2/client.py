@@ -8,7 +8,7 @@ class Client:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_address = server_address
         self.token = token
-        threading.Thread(target=self.receive_message).start()
+        self.receive_thread = threading.Thread(target=self.receive_message)
     
     def create_room(self, room_name, password):
         try:
@@ -30,7 +30,7 @@ class Client:
             # TCP接続を確立
             self.tcp_socket.connect(self.server_address)
             # チャットルームの参加リクエストを送信
-            self.tcp_socket.send(f"JOIN_ROOM {room_name} {password} {self.token}".encode())
+            self.tcp_socket.send(f"JOIN_ROOM {self.username} {room_name} {password} {self.token}".encode())
             # サーバーからレスポンスを受信
             response = self.tcp_socket.recv(1024).decode()
             if response == "OK":
@@ -63,7 +63,7 @@ class Client:
             # UDPでメッセージを受信
             data, address = self.udp_socket.recvfrom(1024)
             message = data.decode()
-            print(f"Received message: {message} from {address}")
+            print(f"Received message: {message}. <- {address}")
         except Exception as e:
             print(f"An error occurred while receiving the message: {e}")
     
@@ -87,6 +87,7 @@ def main():
             print("Enter the room password:")
             password = input()
             client = Client(username, (ip, 9002))
+            client.receive_thread.start()
             client.create_room(room_name, password)
             print('Enter your first message:')
             first_message = input()
@@ -101,14 +102,13 @@ def main():
                 token = input().strip()
                 print('ok, wait...')
                 client = Client(username, (ip, 9002), token)
-                print('for debug')
+                client.receive_thread.start()
                 client.join_room(room_name, password)
-                print('for debug2')
             except Exception as e:
                 print(f"An error occurred while joining the room: {e}")
         else:
             print('Invalid command')
-        
+
         while True:
             print("Enter a message:")
             message = input()
