@@ -19,12 +19,12 @@ class Server:
         self.tcp_socket.listen(5)
         self.running = True
 
-    def addClient(self, client):
-        self.relaySystem.clientInfo[client] = ''
+    def addClient(self, client, addr):
+        self.relaySystem.clientInfo[client] = addr
         print('Added client', client)
     
     def relayMessage(self, username, message):
-        #TODO: 2人目のクライアントのメッセージが1人目クライアントにリレーされない問題を解決する
+        # TODO:2人目がメッセージを送った際はリレーされるが、１人目がメッセージを送った際はリレーされない問題を解決する
         print(f'Now, we hava these clients -> {self.relaySystem.clientInfo}')
         for client in self.relaySystem.clientInfo:
             if client != username:
@@ -55,7 +55,7 @@ class Server:
                     break
                 data = data.decode()
                 print(f"Received: {data}")
-                generated_token = self.handle_tcp_request(data)
+                generated_token = self.handle_tcp_request(data, addr)
                 print(f'Genereated token is {generated_token}')
                 conn.send(generated_token.encode())
                 print('Sended token to client.')
@@ -67,19 +67,19 @@ class Server:
     def generate_token(self):
         return os.urandom(16).hex()
     
-    def handle_tcp_request(self, data):
+    def handle_tcp_request(self, data,addr):
         parts = data.split()
         if parts[0] == "CREATE_ROOM":
             client, room_name, password = parts[1], parts[2], parts[3]
             token = self.generate_token()
             self.chat_rooms[room_name] = password
             self.tokens[token] = room_name
-            self.addClient(client)
+            self.addClient(client, addr)
             return token
         elif parts[0] == "JOIN_ROOM":
             client_name, room_name, password, token = parts[1], parts[2], parts[3], parts[4]
             if room_name in self.chat_rooms and self.chat_rooms[room_name] == password and self.tokens[token] == room_name:
-                self.addClient(client_name)
+                self.addClient(client_name, addr)
                 return "OK"
             else:
                 return "ERROR"
@@ -90,9 +90,10 @@ class Server:
         print(f"Received UDP data: {data} from {addr}")
         client_name = data.decode().split()[0]
         message = data.decode()[len(client_name)+1:]
+        self.relaySystem.clientInfo[client_name] = addr
         print('Sends a successful receipt message to the client.')
         self.udp_socket.sendto(f"OK -> Server received data successfully from {client_name}".encode(), addr)
-        if self.relaySystem.clientInfo[client_name] == '':
+        if client_name not in self.relaySystem.clientInfo or self.relaySystem.clientInfo[client_name] == '':
             self.relaySystem.clientInfo[client_name] = addr
             self.relayMessage(client_name, message)
         self.receiveMessage()
@@ -112,7 +113,7 @@ class Server:
                 print('Received message from', username, ':', message, ':', date)
 
                 if username not in self.relaySystem.clientInfo:
-                    self.addClient(username)
+                    self.addClient(username, client_address)
                 
                 self.relaySystem.clientInfo[username] = client_address
                 self.relaySystem.clientMessage[username] = message

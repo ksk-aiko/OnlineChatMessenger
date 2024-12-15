@@ -5,10 +5,12 @@ class Client:
     def __init__(self, username, server_address, token=None):
         self.username = username
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.bind(('0.0.0.0', 0))
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_address = server_address
         self.token = token
         self.receive_thread = threading.Thread(target=self.receive_message)
+        self.receive_thread.start()
     
     def create_room(self, room_name, password):
         try:
@@ -59,13 +61,14 @@ class Client:
             print(f"An error occurred while sending the message: {e}")
 
     def receive_message(self):
-        try:
-            # UDPでメッセージを受信
-            data, address = self.udp_socket.recvfrom(1024)
-            message = data.decode()
-            print(f"Received message: {message}. <- {address}")
-        except Exception as e:
-            print(f"An error occurred while receiving the message: {e}")
+        while True:
+            try:
+                # UDPでメッセージを受信
+                data, address = self.udp_socket.recvfrom(1024)
+                message = data.decode()
+                print(f"Received message: {message}. <- {address}")
+            except Exception as e:
+                print(f"An error occurred while receiving the message: {e}")
     
     def close(self):
         self.udp_socket.close()
@@ -87,7 +90,6 @@ def main():
             print("Enter the room password:")
             password = input()
             client = Client(username, (ip, 9002))
-            client.receive_thread.start()
             client.create_room(room_name, password)
             print('Enter your first message:')
             first_message = input()
@@ -102,7 +104,6 @@ def main():
                 token = input().strip()
                 print('ok, wait...')
                 client = Client(username, (ip, 9002), token)
-                client.receive_thread.start()
                 client.join_room(room_name, password)
             except Exception as e:
                 print(f"An error occurred while joining the room: {e}")
